@@ -520,6 +520,104 @@ class LoadTextFromJSONFromKey:
             print(error_msg)  # Print to console for debugging
             return (error_msg,)
 
+class LoadTextFromJSONArrayByIndex:
+    """
+    Loads text from a JSON array file by index position.
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "file_prefix": ("STRING", {
+                    "multiline": False,
+                    "default": "text/lite-text.json"
+                }),
+                "index": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 999999
+                }),
+            },
+            "optional": {
+                "default_value": ("STRING", {
+                    "multiline": True,
+                    "default": ""
+                }),
+            },
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text_value",)
+    FUNCTION = "load_from_array"
+    CATEGORY = "lite-text-to-file"
+
+    def load_from_array(self, file_prefix, index, default_value=""):
+        try:
+            # SANITIZE ALL INPUTS FIRST - convert everything to proper types
+            # Handle file_prefix
+            if isinstance(file_prefix, list):
+                file_prefix = str(file_prefix[0]) if len(file_prefix) > 0 else "text/lite-text.json"
+            elif isinstance(file_prefix, (dict, tuple)):
+                file_prefix = str(file_prefix)
+            else:
+                file_prefix = str(file_prefix) if file_prefix else "text/lite-text.json"
+            
+            # Handle index
+            if isinstance(index, list):
+                index = int(index[0]) if len(index) > 0 else 0
+            elif isinstance(index, str):
+                try:
+                    index = int(index)
+                except ValueError:
+                    index = 0
+            else:
+                index = int(index) if index is not None else 0
+            
+            # Handle default_value
+            if isinstance(default_value, list):
+                default_value = json.dumps(default_value, ensure_ascii=False)
+            elif isinstance(default_value, dict):
+                default_value = json.dumps(default_value, ensure_ascii=False)
+            else:
+                default_value = str(default_value) if default_value is not None else ""
+            
+            # Now proceed with the sanitized inputs
+            output_dir = folder_paths.get_output_directory()
+            file_path = os.path.join(output_dir, file_prefix)
+            
+            if not os.path.exists(file_path):
+                if default_value:
+                    return (default_value,)
+                return (f"Error: File not found at {file_path}",)
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            if not isinstance(data, list):
+                return (f"Error: JSON file is not an array",)
+            
+            if index < 0 or index >= len(data):
+                if default_value:
+                    return (default_value,)
+                return (f"Error: Index {index} out of range (array length: {len(data)})",)
+            
+            value = data[index]
+            
+            # Convert to string if it's not already
+            if not isinstance(value, str):
+                value = json.dumps(value, ensure_ascii=False)
+            
+            return (value,)
+            
+        except json.JSONDecodeError as e:
+            return (f"Error: Invalid JSON - {str(e)}",)
+        except Exception as e:
+            import traceback
+            error_msg = f"Error reading file: {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)  # Print to console for debugging
+            return (error_msg,)
+
 
 # Node class mappings
 NODE_CLASS_MAPPINGS = {
@@ -531,6 +629,7 @@ NODE_CLASS_MAPPINGS = {
     "AppendLineToTextFile": AppendLineToTextFile,
     "SaveTextIntoJSON": SaveTextIntoJSON,
     "LoadTextFromJSONFromKey": LoadTextFromJSONFromKey,
+    "LoadTextFromJSONArrayByIndex": LoadTextFromJSONArrayByIndex,
 }
 
 # Display name mappings
@@ -543,4 +642,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AppendLineToTextFile": "Append Line To Text File",
     "SaveTextIntoJSON": "Save Text Into JSON",
     "LoadTextFromJSONFromKey": "Load Text From JSON From Key",
+    "LoadTextFromJSONArrayByIndex": "Load Text From JSON Array By Index",
 }
