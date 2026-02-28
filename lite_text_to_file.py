@@ -3,6 +3,22 @@ import os
 import folder_paths
 
 
+def _safe_resolve_path(base_dir, user_path):
+    """
+    Safely join base_dir and user_path, ensuring the result is contained
+    within base_dir. Raises ValueError on path traversal attempts.
+    """
+    # Normalize and resolve to an absolute path
+    resolved = os.path.realpath(os.path.join(base_dir, user_path))
+    base_resolved = os.path.realpath(base_dir)
+    # Ensure the resolved path starts with the base directory
+    if not (resolved == base_resolved or resolved.startswith(base_resolved + os.sep)):
+        raise ValueError(
+            f"Path traversal detected: '{user_path}' resolves outside the output directory"
+        )
+    return resolved
+
+
 class AppendInputToJSONArrayFile:
     """
     A simple node that appends a string input to a JSON array file.
@@ -36,7 +52,7 @@ class AppendInputToJSONArrayFile:
             output_dir = folder_paths.get_output_directory()
             
             # Combine output directory with file prefix
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
@@ -102,7 +118,7 @@ class WriteToTextFile:
     def write_to_file(self, text_input, file_prefix, mode):
         try:
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
@@ -149,7 +165,7 @@ class LoadFromTextFile:
     def load_from_file(self, file_prefix):
         try:
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             if not os.path.exists(file_path):
                 return (f"Error: File not found at {file_path}",)
@@ -191,7 +207,7 @@ class LoadFromJSONFile:
     def load_from_file(self, file_prefix, output_format):
         try:
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             if not os.path.exists(file_path):
                 return (f"Error: File not found at {file_path}",)
@@ -246,7 +262,7 @@ class ClearJSONArrayFile:
     def clear_file(self, file_prefix, trigger):
         try:
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
@@ -299,7 +315,7 @@ class AppendLineToTextFile:
             from datetime import datetime
             
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
@@ -390,7 +406,7 @@ class SaveTextIntoJSON:
             
             # Now proceed with the sanitized inputs
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             # Ensure the directory exists
             directory = os.path.dirname(file_path)
@@ -486,7 +502,7 @@ class LoadTextFromJSONFromKey:
             
             # Now proceed with the sanitized inputs
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             if not os.path.exists(file_path):
                 if default_value:
@@ -584,7 +600,7 @@ class LoadTextFromJSONArrayByIndex:
             
             # Now proceed with the sanitized inputs
             output_dir = folder_paths.get_output_directory()
-            file_path = os.path.join(output_dir, file_prefix)
+            file_path = _safe_resolve_path(output_dir, file_prefix)
             
             if not os.path.exists(file_path):
                 if default_value:
