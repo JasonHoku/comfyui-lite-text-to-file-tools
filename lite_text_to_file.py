@@ -103,7 +103,7 @@ class WriteToTextFile:
                     "multiline": False,
                     "default": "text/output.txt"
                 }),
-                "mode": (["overwrite", "append"], {
+                "mode": (["overwrite", "append", "prepend"], {
                     "default": "overwrite"
                 }),
             },
@@ -126,13 +126,35 @@ class WriteToTextFile:
                 os.makedirs(directory, exist_ok=True)
             
             # Write to file
+            # Read existing content if prepending
+            existing_content = ""
+            if mode == "prepend":
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        existing_content = f.read()
+                except FileNotFoundError:
+                    # If the file doesn't exist yet, it will just write it fresh
+                    pass 
+            
+            # Write to file
             write_mode = 'a' if mode == "append" else 'w'
             with open(file_path, write_mode, encoding='utf-8') as f:
-                f.write(text_input)
-                if mode == "append":
-                    f.write('\n')  # Add newline when appending
+                if mode == "prepend":
+                    # Write new text, a newline, and then the original content
+                    f.write(text_input + '\n' + existing_content)
+                else:
+                    f.write(text_input)
+                    if mode == "append":
+                        f.write('\n')  # Add newline when appending
             
-            action = "Appended to" if mode == "append" else "Wrote to"
+            # Update status message
+            if mode == "append":
+                action = "Appended to"
+            elif mode == "prepend":
+                action = "Prepended to"
+            else:
+                action = "Wrote to"
+                
             status = f"✓ {action} {file_path}"
             return (status,)
             

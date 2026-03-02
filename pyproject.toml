@@ -1,7 +1,7 @@
 [project]
 name = "lite-text-to-file-tools"
 description = "Lightweight and fast, text to and from file tools for ComfyUI, has some JSON capabilities as well, great for storing, reading, organizing, batching text and batch text operations."
-version = "1.0.1"
+version = "1.0.2"
 license = {file = "LICENSE"} 
 # classifiers = [
 #     # For OS-independent nodes (works on all operating systems)
